@@ -222,16 +222,13 @@ class ScannerHardware(models.Model):
         """
         This method is called by the barcode reader,
         """
-        res = {'error_message': False}
         # Retrieve the terminal id
         terminal = self._get_terminal(terminal_number)
-        
         if terminal.user_id.id:
             # only reset last call if user_id
             terminal.last_call_dt = fields.Datetime.now()
         uid = terminal.user_id.id or self.env.uid
-        terminal.sudo(uid)._scanner_call('action', message)
-        return res
+        return terminal.sudo(uid)._scanner_call('action', message)
 
     def _scanner_call(self, action, message=False,
                       transition_type='keyboard'):
@@ -351,17 +348,17 @@ class ScannerHardware(models.Model):
         return self.scanner_call(terminal_number=numterm, action='end')
 
     @api.model
-    def check_credentials(self, login, password):
+    def check_credentials(self, login):
         res_users = self.env['res.users']
         try:
-            user = res_users.search([('login', '=', login)])
+            user = res_users.search([('login', '=', login)], limit=1)
             if user:
-                res_users.sudo(user).check_credentials(password)
-            return user.id
+                return user.id
+            return False
         except exceptions.AccessDenied:
             return False
 
-    def login(self, login, password):
+    def login(self, login):
         """This method assign the uid associated to login
         as current user of the hardware.
         The method MUST be called on the last step since the login
@@ -369,7 +366,7 @@ class ScannerHardware(models.Model):
         be assigned this one
         """
         self.ensure_one()
-        uid = self.check_credentials(login, password)
+        uid = self.check_credentials(login)
         if uid:
             self.write({
                 'user_id': uid,

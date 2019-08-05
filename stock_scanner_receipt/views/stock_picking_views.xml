@@ -7,7 +7,13 @@
         <field name="arch" type="xml">
             <button name="button_validate" position="after">
                 <button name="action_reserve_barcode_scanner"
-                        string="Barcode scan"
+                        string="Reserve barcode scanner"
+                        groups="stock.group_stock_user"
+                        type="object"
+                        class="oe_highlight"
+                />
+                <button name="action_reserve_barcode_scanner"
+                        string="Unreserve barcode scanner"
                         groups="stock.group_stock_user"
                         type="object"
                         class="oe_highlight"

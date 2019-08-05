@@ -15,9 +15,20 @@ class StockPicking(models.Model):
         if scanner:
             # Login
             res = scanner.scanner_call(scanner.code, 'Login')
-            res = scanner.scanner_call(scanner.code, 'admin')
-            res = scanner.scanner_call(scanner.code, 'admin')
+            res = scanner.scanner_call(scanner.code, self.env.user.sudo().login)
             
-            # Set scenario and select receipt
-            res = scanner.scanner_call(scanner.code, 'Receipt')
-            res = scanner.scanner_call(scanner.code, self.name)
+            if scanner.user_id:
+                # Set scenario and select receipt
+                res = scanner.scanner_call(scanner.code, 'Receipt')
+                res = scanner.scanner_call(scanner.code, self.name)
+    
+    def action_unreserve_barcode_scanner(self):
+        self.ensure_one()
+        ScannerHardware = self.env['scanner.hardware']
+        scanner = ScannerHardware.search([
+            ('user_id', '=', self.env.uid),
+            ('reference_document', '=', self.id),
+        ], limit=1)
+        if scanner:
+            # Logout
+            res = scanner.scanner_call(scanner.code, 'Logout')

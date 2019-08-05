@@ -5,8 +5,10 @@
 'Put the returned result or message in <res>, as a list of strings.'
 'Put the returned value in <val>, as an integer'
 
-act = 'C'
+terminal.logout()
+
+act = 'F'
 res = [
-    '',
-    _('Do you really want to logout?'),
+    _('You are now logged out'),
+    _('Bye !'),
 ]
