@@ -5,7 +5,7 @@
 'Put the returned result or message in <res>, as a list of strings.'
 'Put the returned value in <val>, as an integer'
 
-move = env['stock.move'].browse(int(message))
+move = env['stock.move'].search([('product_id.barcode', '=', message)], limit=1)
 terminal.set_tmp_value('tmp_val1', move.id)
 
 res = [

@@ -11,9 +11,11 @@
     'license': 'AGPL-3',
     'installable': True,
     'depends': [
+        'stock',
         'stock_scanner',
     ],
     'data': [
         'data/Receipt/Receipt.scenario',
+        'views/stock_picking_views.xml',
     ],
 }

@@ -16,17 +16,6 @@ from odoo.tools.safe_eval import safe_eval
 
 logger = logging.getLogger('stock_scanner')
 
-_CURSES_COLORS = [
-    ('black', _('Black')),
-    ('blue', _('Blue')),
-    ('cyan', _('Cyan')),
-    ('green', _('Green')),
-    ('magenta', _('Magenta')),
-    ('red', _('Red')),
-    ('white', _('White')),
-    ('yellow', _('Yellow')),
-]
-
 PG_CONCURRENCY_ERRORS_TO_RETRY = (
     errorcodes.LOCK_NOT_AVAILABLE,
     errorcodes.SERIALIZATION_FAILURE,
@@ -38,13 +27,6 @@ class ScannerHardware(models.Model):
     _name = 'scanner.hardware'
     _description = 'Scanner Hardware'
 
-    @api.model
-    def _colors_get(self):
-        return _CURSES_COLORS
-
-    # ===========================================================================
-    # COLUMNS
-    # ===========================================================================
     name = fields.Char(
         string='Name',
         required=True,
@@ -57,16 +39,6 @@ class ScannerHardware(models.Model):
         string='Log enabled',
         default=False,
         help='Enable logging messages from scenarios.')
-    screen_width = fields.Integer(
-        string='Screen Width',
-        default=20,
-        required=False,
-        help='Width of the terminal\'s screen.')
-    screen_height = fields.Integer(
-        string='Screen Height',
-        default=4,
-        required=False,
-        help='Height of the terminal\'s screen.')
     warehouse_id = fields.Many2one(
         comodel_name='stock.warehouse',
         string='Warehouse',
@@ -113,42 +85,6 @@ class ScannerHardware(models.Model):
         required=False,
         readonly=True,
         help='ID of the reference document.')
-    base_fg_color = fields.Selection(
-        selection='_colors_get',
-        string='Base - Text Color',
-        required=True,
-        default='white',
-        help='Default color for the text.')
-    base_bg_color = fields.Selection(
-        selection='_colors_get',
-        string='Base - Background Color',
-        required=True,
-        default='blue',
-        help='Default color for the background.')
-    info_fg_color = fields.Selection(
-        selection='_colors_get',
-        string='Info - Text Color',
-        required=True,
-        default='yellow',
-        help='Color for the info text.')
-    info_bg_color = fields.Selection(
-        selection='_colors_get',
-        string='Info - Background Color',
-        required=True,
-        default='blue',
-        help='Color for the info background.')
-    error_fg_color = fields.Selection(
-        selection='_colors_get',
-        string='Error - Text Color',
-        required=True,
-        default='yellow',
-        help='Color for the error text.')
-    error_bg_color = fields.Selection(
-        selection='_colors_get',
-        string='Error - Background Color',
-        required=True,
-        default='red',
-        help='Color for the error background.')
     tmp_values = fields.Serialized(
         readonly=True
     )
@@ -278,52 +214,31 @@ class ScannerHardware(models.Model):
         return terminal
 
     @api.model
-    def scanner_check(self, terminal_number):
-        terminal = self._get_terminal(terminal_number)
-        uid = terminal.user_id.id or self.env.uid
-        terminal = terminal.sudo(uid)
-        return terminal.scenario_id and (
-            terminal.scenario_id.id,
-            terminal.scenario_id.name) or False
+    def _get_scenario(self):
+        return self.scenario_id or False
 
     @api.model
-    def scanner_call(self, terminal_number, action, message=False,
-                     transition_type='keyboard'):
+    def scanner_call(self, terminal_number, message):
         """
         This method is called by the barcode reader,
         """
+        res = {'error_message': False}
         # Retrieve the terminal id
         terminal = self._get_terminal(terminal_number)
+        
         if terminal.user_id.id:
             # only reset last call if user_id
             terminal.last_call_dt = fields.Datetime.now()
-        # Change uid if defined on the stock scanner
         uid = terminal.user_id.id or self.env.uid
-        return terminal.sudo(uid)._scanner_call(
-            action, message=message, transition_type=transition_type)
+        terminal.sudo(uid)._scanner_call('action', message)
+        return res
 
     def _scanner_call(self, action, message=False,
                       transition_type='keyboard'):
         self.ensure_one()
         scanner_scenario_obj = self.env['scanner.scenario']
-        # Retrieve the terminal screen size
-        if action == 'screen_size':
-            logger.debug('Retrieve screen size')
-            screen_size = self._screen_size()
-            return ('M', screen_size, 0)
-
-        # Retrieve the terminal screen colors
-        if action == 'screen_colors':
-            logger.debug('Retrieve screen colors')
-            screen_colors = {
-                'base': (self.base_fg_color, self.base_bg_color),
-                'info': (self.info_fg_color, self.info_bg_color),
-                'error': (self.error_fg_color, self.error_bg_color),
-            }
-            return ('M', screen_colors, 0)
-
         # Execute the action
-        elif action == 'action':
+        if action == 'action':
             # The terminal is attached to a scenario
             if self.scenario_id:
                 return self._scenario_save(
@@ -726,7 +641,7 @@ class ScannerHardware(models.Model):
 
         # Manage automatic steps
         if result[0] == 'A':
-            return self.scanner_call(self.code, 'action', message=result[2])
+            return self.scanner_call(self.code, message=result[2])
 
         return result
 
@@ -748,14 +663,6 @@ class ScannerHardware(models.Model):
         ])
 
         return scanner_scenario_ids.mapped('name')
-
-    @api.multi
-    def _screen_size(self):
-        """
-        Retrieve the screen size for this terminal
-        """
-        self.ensure_one()
-        return (self.screen_width, self.screen_height)
 
     def log(self, log_message):
         if self.log_enabled:
