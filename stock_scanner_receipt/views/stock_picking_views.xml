@@ -5,18 +5,23 @@
         <field name="model">stock.picking</field>
         <field name="inherit_id" ref="stock.view_picking_form"/>
         <field name="arch" type="xml">
+            <field name="group_id" position="after">
+                <field name="scanner_hardware_id" readonly="1"/>
+            </field>
             <button name="button_validate" position="after">
                 <button name="action_reserve_barcode_scanner"
                         string="Reserve barcode scanner"
                         groups="stock.group_stock_user"
                         type="object"
                         class="oe_highlight"
+                        attrs="{'invisible': ['|', ('picking_type_code', '!=', 'incoming'), ('scanner_hardware_id', '!=', False)]}"
                 />
-                <button name="action_reserve_barcode_scanner"
+                <button name="action_unreserve_barcode_scanner"
                         string="Unreserve barcode scanner"
                         groups="stock.group_stock_user"
                         type="object"
                         class="oe_highlight"
+                        attrs="{'invisible': ['|', ('picking_type_code', '!=', 'incoming'), ('scanner_hardware_id', '=', False)]}"
                 />
             </button>
         </field>

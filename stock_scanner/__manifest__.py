@@ -32,6 +32,7 @@
         'views/scanner_scenario_step.xml',
         'views/scanner_scenario_transition.xml',
         'views/scanner_hardware.xml',
+        'wizard/reserve_scanner_views.xml',
     ],
     'demo': [
         'demo/stock_scanner_demo.xml',

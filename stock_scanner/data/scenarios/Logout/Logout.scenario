@@ -9,5 +9,5 @@
   <model_id>scanner.hardware</model_id>
   <type>scenario</type>
   <id>stock_scanner.scanner_scenario_logout</id>
-  <Step id="stock_scanner.scanner_scenario_logout_step_confirm" name="Logout confirm" no_back="False" step_back="False" step_start="True" step_stop="False"/>
+  <Step id="stock_scanner.scanner_scenario_logout_step_confirm" name="Logout confirm" no_back="False" step_back="False" step_start="True" step_stop="True"/>
 </scenario>
